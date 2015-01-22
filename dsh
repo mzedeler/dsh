@@ -1,0 +1,52 @@
+#!/bin/bash
+
+if [ "$1" == 'build' -o -z "$(docker images | grep '^dsh[[:space:]]')" ]; then
+  echo 'Docker image not found. Rebuilding.'
+
+  docker build -t dsh - <<END_DOCKERFILE
+FROM phusion/baseimage
+
+RUN apt-get update
+RUN apt-get install -y curl
+RUN apt-get install runit
+RUN curl -sSL https://get.docker.com/ubuntu/ | sh
+
+# Workaround for broken PAM, see https://github.com/phusion/baseimage-docker/issues/181
+RUN apt-get -y build-dep pam
+RUN export CONFIGURE_OPTS=--disable-audit && cd /root && apt-get -b source pam && dpkg -i libpam-doc*.deb libpam-modules*.deb libpam-runtime*.deb libpam0g*.deb
+RUN mv /root /old-root && ln -s /workspace /root
+CMD cd /root && /bin/bash -l
+RUN apt-get -y install joe
+END_DOCKERFILE
+fi
+
+DOCKER_HOST=${DOCKER_HOST:-tcp://localhost:2375}
+DOCKER_PARAMS="-e DOCKER_HOST=$DOCKER_HOST"
+
+if [ ! -z $DOCKER_CERT_PATH ]; then
+    DOCKER_PARAMS="$DOCKER_PARAMS -v $DOCKER_CERT_PATH:/etc/docker-certs"
+    DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_CERT_PATH=/etc/docker-certs"
+fi
+
+if [ ! -z $DOCKER_TLS_VERIFY ]; then
+    DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_TLS_VERIFY=$DOCKER_TLS_VERIFY"
+fi
+
+# Set up data container for workspace (if it doesn't exist already)
+docker run --name dsh-ws -v /workspace busybox true 2>/dev/null
+
+# Start samba file sharing (if it hasn't started already)
+RUNNING=$(docker inspect --format "{{.State.Running}}" samba-server 2>/dev/null)
+if [ ${RUNNING:-false} == false ]; then
+    # Set up file sharing container
+    docker run --name dsh-share --rm -v /usr/bin/docker:/docker -v /var/run/docker.sock:/docker.sock svendowideit/samba dsh-ws
+fi
+
+# Now run the docker shell container
+PS1=hej docker run $DOCKER_PARAMS \
+    --net=host -t -i \
+    -v ~/.ssh:/workspace/.ssh \
+    -v ~/.gitconfig:/workspace/.gitconfig \
+    --volumes-from dsh-ws \
+    --rm \
+    dsh
