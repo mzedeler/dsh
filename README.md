@@ -18,7 +18,7 @@ Run your shell inside docker and take docker with you.
 
 ## What it does
 
-Docker shell (dsh) launches a bash shell inside a container, and will bring
+Docker shell (dsh) is a bash shell inside a container, and will bring
 any docker configuration along, making it possible to control docker from
 inside dsh.
 
