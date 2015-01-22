@@ -23,9 +23,9 @@ any docker configuration along, making it possible to control docker from
 inside dsh.
 
 The shell comes with a data container of its own that is persisted across
-invocations of dsh. Anything under /root (a symlink to /workspace) is
-persisted in the data container dsh-ws.
+invocations of dsh. Anything under `/root` (a symlink to `/workspace`) is
+persisted in the data container named `dsh-ws`.
 
-When run, the shell will automatically launch a samba file share, exposing
-the volumes avaliable in dsh (mainly /workspace), making it easy to share
+When run, the shell will automatically launch a smb file share, exposing
+the volumes avaliable in dsh (mainly `/workspace`), making it easy to share
 files with the shell.
