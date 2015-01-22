@@ -29,3 +29,11 @@ persisted in the data container named `dsh-ws`.
 When run, the shell will automatically launch a smb file share, exposing
 the volumes avaliable in dsh (mainly `/workspace`), making it easy to share
 files with the shell.
+
+## Author
+
+Written by Michael Zedeler <michael@zedeler.dk>
+
+## Copyright and license
+
+Copyright Nota (http://nota.dk), licensed under the MIT license, see LICENSE.
