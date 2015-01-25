@@ -19,17 +19,26 @@ RUN apt-get -y install joe
 END_DOCKERFILE
 fi
 
-
-DOCKER_HOST=${DOCKER_HOST:-tcp://localhost:2375}
-DOCKER_PARAMS="-e DOCKER_HOST=$DOCKER_HOST"
-
-if test ! -z $DOCKER_CERT_PATH; then
-    DOCKER_PARAMS="$DOCKER_PARAMS -v $DOCKER_CERT_PATH:/etc/docker-certs"
-    DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_CERT_PATH=/etc/docker-certs"
+if test -z "$(uname -a | grep boot2docker)"; then
+    BOOT2DOCKER=0
+else
+    BOOT2DOCKER=1
 fi
 
-if test ! -z $DOCKER_TLS_VERIFY ; then
-    DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_TLS_VERIFY=$DOCKER_TLS_VERIFY"
+if test $BOOT2DOCKER = 1; then
+    DOCKER_PARAMS="-e DOCKER_HOST=tcp://boot2docker:2376 -e DOCKER_CERT_PATH=/etc/docker-certs -e DOCKER_TLS_VERIFY=1 -v /var/lib/boot2docker/tls:/etc/docker-certs"
+else
+    DOCKER_HOST=${DOCKER_HOST:-tcp://localhost:2375}
+    DOCKER_PARAMS="-e DOCKER_HOST=$DOCKER_HOST"
+
+    if test ! -z $DOCKER_CERT_PATH; then
+        DOCKER_PARAMS="$DOCKER_PARAMS -v $DOCKER_CERT_PATH:/etc/docker-certs"
+        DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_CERT_PATH=/etc/docker-certs"
+    fi
+
+    if test ! -z $DOCKER_TLS_VERIFY ; then
+        DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_TLS_VERIFY=$DOCKER_TLS_VERIFY"
+    fi
 fi
 
 # Set up data container for workspace (if it doesn't exist already)
@@ -47,7 +56,7 @@ if test ${RUNNING:-false} = false; then
     docker run --name dsh-share --rm -v $DOCKER_EXEC:/docker -v /var/run/docker.sock:/docker.sock svendowideit/samba dsh-ws
 fi
 
-if test -z "$(uname -a | grep boot2docker)"; then
+if test $BOOT2DOCKER = 1; then
     if test -f $HOME/.gitconfig; then
         DOCKER_OPTS=" -v $HOME/.gitconfig:/workspace/.gitconfig"
     fi
