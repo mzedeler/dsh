@@ -69,7 +69,7 @@ if test ${RUNNING:-false} = false; then
     else
         DOCKER_EXEC=/usr/bin/docker
     fi
-    docker run --name samba-server -v $DOCKER_EXEC:/docker -v /var/run/docker.sock:/docker.sock svendowideit/samba dsh-ws
+    docker run --rm -v $DOCKER_EXEC:/docker -v /var/run/docker.sock:/docker.sock svendowideit/samba dsh-ws
 fi
 
 if test $BOOT2DOCKER = 0; then
