@@ -16,6 +16,7 @@ RUN apt-get -y build-dep pam
 RUN export CONFIGURE_OPTS=--disable-audit && cd /root && apt-get -b source pam && dpkg -i libpam-doc*.deb libpam-modules*.deb libpam-runtime*.deb libpam0g*.deb
 CMD mv /root /old-root && ln -s /workspace /root && cd /root && /bin/bash -l
 RUN apt-get -y install joe wget
+EXPOSE 8080
 END_DOCKERFILE
 fi
 
@@ -27,12 +28,8 @@ if test -f $(dirname $0)/.dsh/Dockerfile; then
     CUSTOM_DOCKERFILE=$(dirname $0)/.dsh/Dockerfile
 fi
 
-if test ! -z "$CUSTOM_DOCKERFILE"; then
-    if test "$1" = 'build' -o -z "$(docker images | grep '^dsh-custom[[:space:]]')"; then
-        echo 'Custom Docker image not found. Rebuilding.'
-        docker build -t dsh-custom $(dirname $CUSTOM_DOCKERFILE)
-        DSH_IMAGE=dsh-custom
-    fi
+if docker images | grep -e '^dsh-custom[[:space:]]' >/dev/null; then
+    DSH_IMAGE=dsh-custom
 fi
 
 if test -z "$(uname -a | grep boot2docker)"; then
@@ -83,8 +80,10 @@ fi
 
 # Now run the docker shell container
 docker run $DOCKER_PARAMS \
-    --net=host -t -i \
+    -t -i \
     $DOCKER_OPTS \
     --volumes-from dsh-ws \
     --rm \
     $DSH_IMAGE
+
+#    --net=host
