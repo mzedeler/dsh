@@ -1,5 +1,34 @@
 #!/bin/sh
 
+# Set up environment for connecting to docker
+if test -n "$(uname -a | grep boot2docker)"; then
+    # Running inside boot2docker vm
+    HOST_IP=$(ifconfig eth0 | grep 'inet addr:' | awk -F: '{print $2}' | awk '{print $1}')
+    DOCKER_PARAMS="--add-host boot2docker:$HOST_IP"
+	DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_HOST=tcp://boot2docker:2376"
+	DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_CERT_PATH=/etc/docker-certs"
+	DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_TLS_VERIFY=1"
+	DOCKER_PARAMS="$DOCKER_PARAMS -v /var/lib/boot2docker/tls:/etc/docker-certs"
+else
+    # Using docker on some other system
+    DOCKER_PARAMS=" -v /var/run/docker.sock:/var/run/docker.sock"
+    if test ! -z $DOCKER_CERT_PATH; then
+        DOCKER_PARAMS="$DOCKER_PARAMS -v $DOCKER_CERT_PATH:/etc/docker-certs"
+        DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_CERT_PATH=/etc/docker-certs"
+    fi
+
+    if test ! -z $DOCKER_TLS_VERIFY ; then
+        DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_TLS_VERIFY=$DOCKER_TLS_VERIFY"
+    fi
+
+    if test -f $HOME/.gitconfig; then
+        DOCKER_OPTS=" -v $HOME/.gitconfig:/workspace/.gitconfig"
+    fi
+    if test -d $HOME/.ssh; then
+        DOCKER_OPTS="$DOCKER_OPTS -v $HOME/.ssh:/workspace/.ssh"
+    fi
+fi
+
 DSH_IMAGE=dsh
 if test "$1" = 'build' -o -z "$(docker images | grep '^dsh[[:space:]]')"; then
     echo 'Docker image not found. Rebuilding.'
@@ -20,39 +49,10 @@ EXPOSE 8080
 END_DOCKERFILE
 fi
 
-if test -f $HOME/.dsh/Dockerfile; then
-    CUSTOM_DOCKERFILE=$HOME/.dsh/Dockerfile
-fi
-
-if test -f $(dirname $0)/.dsh/Dockerfile; then
-    CUSTOM_DOCKERFILE=$(dirname $0)/.dsh/Dockerfile
-fi
-
 if docker images | grep -e '^dsh-custom[[:space:]]' >/dev/null; then
     DSH_IMAGE=dsh-custom
 fi
 
-if test -z "$(uname -a | grep boot2docker)"; then
-    BOOT2DOCKER=0
-else
-    BOOT2DOCKER=1
-fi
-
-if test $BOOT2DOCKER = 1; then
-    DOCKER_PARAMS="-e DOCKER_HOST=tcp://boot2docker:2376 -e DOCKER_CERT_PATH=/etc/docker-certs -e DOCKER_TLS_VERIFY=1 -v /var/lib/boot2docker/tls:/etc/docker-certs"
-else
-#    DOCKER_HOST=${DOCKER_HOST:-tcp://localhost:2375}
-#    DOCKER_PARAMS="-e DOCKER_HOST=$DOCKER_HOST"
-     DOCKER_PARAMS=" -v /var/run/docker.sock:/var/run/docker.sock"
-    if test ! -z $DOCKER_CERT_PATH; then
-        DOCKER_PARAMS="$DOCKER_PARAMS -v $DOCKER_CERT_PATH:/etc/docker-certs"
-        DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_CERT_PATH=/etc/docker-certs"
-    fi
-
-    if test ! -z $DOCKER_TLS_VERIFY ; then
-        DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_TLS_VERIFY=$DOCKER_TLS_VERIFY"
-    fi
-fi
 
 # Set up data container for workspace (if it doesn't exist already)
 docker run --name dsh-ws -v /workspace busybox true 2>/dev/null
@@ -60,22 +60,7 @@ docker run --name dsh-ws -v /workspace busybox true 2>/dev/null
 # Start samba file sharing (if it hasn't started already)
 RUNNING=$(docker inspect --format "{{.State.Running}}" samba-server 2>/dev/null)
 if test ${RUNNING:-false} = false; then
-    # Set up file sharing container
-    if test -f /usr/local/bin/docker; then
-        DOCKER_EXEC=/usr/local/bin/docker
-    else
-        DOCKER_EXEC=/usr/bin/docker
-    fi
-    docker run --rm -v $DOCKER_EXEC:/docker -v /var/run/docker.sock:/docker.sock svendowideit/samba dsh-ws
-fi
-
-if test $BOOT2DOCKER = 0; then
-    if test -f $HOME/.gitconfig; then
-        DOCKER_OPTS=" -v $HOME/.gitconfig:/workspace/.gitconfig"
-    fi
-    if test -d $HOME/.ssh; then
-        DOCKER_OPTS="$DOCKER_OPTS -v $HOME/.ssh:/workspace/.ssh"
-    fi
+    docker run --rm -v "$(which docker):/docker" -v /var/run/docker.sock:/docker.sock svendowideit/samba dsh-ws
 fi
 
 # Now run the docker shell container
@@ -85,5 +70,3 @@ docker run $DOCKER_PARAMS \
     --volumes-from dsh-ws \
     --rm \
     $DSH_IMAGE
-
-#    --net=host
