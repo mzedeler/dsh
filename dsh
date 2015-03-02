@@ -14,7 +14,7 @@ RUN curl -sSL https://get.docker.com/ubuntu/ | sh
 # Workaround for broken PAM, see https://github.com/phusion/baseimage-docker/issues/181
 RUN apt-get -y build-dep pam
 RUN export CONFIGURE_OPTS=--disable-audit && cd /root && apt-get -b source pam && dpkg -i libpam-doc*.deb libpam-modules*.deb libpam-runtime*.deb libpam0g*.deb
-CMD mv /root /old-root && ln -s /workspace /root && cd /root && /bin/bash -l
+CMD mv /root /old-root && ln -s /workspace /root && cd /root && login -f root
 RUN apt-get -y install joe wget
 END_DOCKERFILE
 fi
