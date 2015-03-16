@@ -5,10 +5,10 @@ if test -n "$(uname -a | grep boot2docker)"; then
     # Running inside boot2docker vm
     HOST_IP=$(ifconfig eth0 | grep 'inet addr:' | awk -F: '{print $2}' | awk '{print $1}')
     DOCKER_PARAMS="--add-host boot2docker:$HOST_IP"
-	DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_HOST=tcp://boot2docker:2376"
-	DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_CERT_PATH=/etc/docker-certs"
-	DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_TLS_VERIFY=1"
-	DOCKER_PARAMS="$DOCKER_PARAMS -v /var/lib/boot2docker/tls:/etc/docker-certs"
+    DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_HOST=tcp://boot2docker:2376"
+    DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_CERT_PATH=/etc/docker-certs"
+    DOCKER_PARAMS="$DOCKER_PARAMS -e DOCKER_TLS_VERIFY=1"
+    DOCKER_PARAMS="$DOCKER_PARAMS -v /var/lib/boot2docker/tls:/etc/docker-certs"
 else
     # Using docker on some other system
     DOCKER_PARAMS=" -v /var/run/docker.sock:/var/run/docker.sock"
@@ -26,6 +26,10 @@ else
     fi
     if test -d $HOME/.ssh; then
         DOCKER_OPTS="$DOCKER_OPTS -v $HOME/.ssh:/workspace/.ssh"
+    fi
+    if test -n "$SSH_AUTH_SOCK"; then
+        DOCKER_OPTS="$DOCKER_OPTS -v $(dirname $SSH_AUTH_SOCK):/tmp/ssh-agent"
+        DOCKER_OPTS="$DOCKER_OPTS -e SSH_AUTH_SOCK=/tmp/ssh-agent/$(basename $SSH_AUTH_SOCK)"
     fi
 fi
 
