@@ -24,9 +24,6 @@ else
     if test -f $HOME/.gitconfig; then
         DOCKER_OPTS=" -v $HOME/.gitconfig:/workspace/.gitconfig"
     fi
-    if test -d $HOME/.ssh; then
-        DOCKER_OPTS="$DOCKER_OPTS -v $HOME/.ssh:/workspace/.ssh"
-    fi
     if test -n "$SSH_AUTH_SOCK"; then
         DOCKER_OPTS="$DOCKER_OPTS -v $(dirname $SSH_AUTH_SOCK):/tmp/ssh-agent"
         DOCKER_OPTS="$DOCKER_OPTS -e SSH_AUTH_SOCK=/tmp/ssh-agent/$(basename $SSH_AUTH_SOCK)"
