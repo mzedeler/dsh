@@ -64,7 +64,7 @@ docker run --name dsh-ws -v /workspace busybox true 2>/dev/null
 # Start samba file sharing (if it hasn't started already)
 RUNNING=$(docker inspect --format "{{.State.Running}}" samba-server 2>/dev/null)
 if test ${RUNNING:-false} = false; then
-    docker run --rm -v "$(which docker):/docker" -v /var/run/docker.sock:/docker.sock svendowideit/samba dsh-ws
+    docker run -e USER=root -e USERID=0 --rm -v "$(which docker):/docker" -v /var/run/docker.sock:/docker.sock svendowideit/samba dsh-ws
 fi
 
 # Now run the docker shell container
