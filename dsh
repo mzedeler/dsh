@@ -57,7 +57,7 @@ fi
 
 # Set up data container for workspace (if it doesn't exist already)
 EXIT_CODE=$(docker inspect --format "{{.State.ExitCode}}" dsh-ws 2>/dev/null)                             
-if test ${EXIT_CODE:-1} = 0; then
+if test ${EXIT_CODE:-1} != 0; then
     docker run -t --name dsh-ws -v /workspace busybox true 2>/dev/null
     docker run --rm --volumes-from=dsh-ws phusion/baseimage /bin/bash -c "cp /etc/skel/.* /workspace/ 2>/dev/null"
 fi                                                                                                                                      
