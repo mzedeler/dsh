@@ -1,5 +1,18 @@
 #!/bin/sh
 
+# Parameter parsing
+while test $# != 0 -a "$1" != "--"; do
+    case $1 in
+        -b|--build) OPT_BUILD=1 ;;
+        -s|--samba) OPT_SAMBA=1 ;;
+    esac
+    shift
+done
+
+if test "$1" = "--"; then
+  shift
+fi
+
 # Set up environment for connecting to docker
 if test -n "$(uname -a | grep boot2docker)"; then
     # Running inside boot2docker vm
@@ -31,22 +44,10 @@ else
 fi
 
 DSH_IMAGE=dsh
-if test "$1" = 'build' -o -z "$(docker images | grep '^dsh[[:space:]]')"; then
+if test -n "$OPT_BUILD" -o -z "$(docker images | grep '^dsh[[:space:]]')"; then
     echo 'Docker image not found. Rebuilding.'
     docker build -t dsh - <<END_DOCKERFILE
 FROM phusion/baseimage
-
-RUN apt-get update
-RUN apt-get install -y curl
-RUN apt-get install runit
-RUN curl -sSL https://get.docker.com/ubuntu/ | sh
-
-# Workaround for broken PAM, see https://github.com/phusion/baseimage-docker/issues/181
-RUN apt-get -y build-dep pam
-RUN export CONFIGURE_OPTS=--disable-audit && cd /root && apt-get -b source pam && dpkg -i libpam-doc*.deb libpam-modules*.deb libpam-runtime*.deb libpam0g*.deb
-CMD perl -pe s{root:/root}{root:/workspace} -i /etc/passwd && login -p -f root
-RUN apt-get -y install joe wget
-EXPOSE 8080
 END_DOCKERFILE
 fi
 
@@ -54,18 +55,19 @@ if docker images | grep -e '^dsh-custom[[:space:]]' >/dev/null; then
     DSH_IMAGE=dsh-custom
 fi
 
-
 # Set up data container for workspace (if it doesn't exist already)
 EXIT_CODE=$(docker inspect --format "{{.State.ExitCode}}" dsh-ws 2>/dev/null)                             
 if test ${EXIT_CODE:-1} != 0; then
     docker run -t --name dsh-ws -v /workspace busybox true 2>/dev/null
     docker run --rm --volumes-from=dsh-ws phusion/baseimage /bin/bash -c "cp /etc/skel/.* /workspace/ 2>/dev/null"
-fi                                                                                                                                      
+fi
 
-# Start samba file sharing (if it hasn't started already)
-RUNNING=$(docker inspect --format "{{.State.Running}}" samba-server 2>/dev/null)
-if test ${RUNNING:-false} = false; then
-    docker run -e USER=root -e USERID=0 --rm -v "$(which docker):/docker" -v /var/run/docker.sock:/docker.sock svendowideit/samba dsh-ws
+if test -n "$OPT_SAMBA"; then
+    # Start samba file sharing (if it hasn't started already)
+    RUNNING=$(docker inspect --format "{{.State.Running}}" samba-server 2>/dev/null)
+    if test ${RUNNING:-false} = false; then
+        docker run -e USER=root -e USERID=0 --rm -v "$(which docker):/docker" -v /var/run/docker.sock:/docker.sock svendowideit/samba dsh-ws
+    fi
 fi
 
 # Now run the docker shell container
@@ -74,5 +76,4 @@ docker run $DOCKER_PARAMS \
     $DOCKER_OPTS \
     --volumes-from dsh-ws \
     --rm \
-    $DSH_IMAGE
-
+    $DSH_IMAGE $*
