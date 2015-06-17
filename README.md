@@ -30,6 +30,18 @@ When run, the shell will automatically launch a smb file share, exposing
 the volumes avaliable in dsh (mainly `/workspace`), making it easy to share
 files with the shell.
 
+## Parameters
+
+ -s|--samba: start samba server for file sharing
+ -b|--build: rebuild dsh image
+
+Use `--` to indicate start of command line to run inside dsh:
+
+    $ dsh -- ls /
+    bin   dev  home  lib64	mnt  proc  run	 srv  tmp  var
+    boot  etc  lib	 media	opt  root  sbin  sys  usr  workspace
+    $
+
 ## Author
 
 Written by Michael Zedeler <michael@zedeler.dk>
