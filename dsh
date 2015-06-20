@@ -5,12 +5,17 @@ while test $# != 0 -a "$1" != "--"; do
     case $1 in
         -b|--build) OPT_BUILD=1 ;;
         -s|--samba) OPT_SAMBA=1 ;;
+       --volumes-from) OPT_VOLUMES_FROM=$2; shift ;;
     esac
     shift
 done
 
 if test "$1" = "--"; then
   shift
+fi
+
+if test -n "$OPT_VOLUMES_FROM"; then
+    DOCKER_OPTS="$DOCKER_OPTS --volumes-from=$OPT_VOLUMES_FROM"
 fi
 
 # Set up environment for connecting to docker
@@ -35,7 +40,7 @@ else
     fi
 
     if test -f $HOME/.gitconfig; then
-        DOCKER_OPTS=" -v $HOME/.gitconfig:/workspace/.gitconfig"
+        DOCKER_OPTS="$DOCKER_OPTS -v $HOME/.gitconfig:/workspace/.gitconfig"
     fi
     if test -n "$SSH_AUTH_SOCK"; then
         DOCKER_OPTS="$DOCKER_OPTS -v $(dirname $SSH_AUTH_SOCK):/tmp/ssh-agent"
@@ -77,3 +82,4 @@ docker run $DOCKER_PARAMS \
     --volumes-from dsh-ws \
     --rm \
     $DSH_IMAGE $*
+
