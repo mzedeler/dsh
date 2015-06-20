@@ -5,7 +5,8 @@ while test $# != 0 -a "$1" != "--"; do
     case $1 in
         -b|--build) OPT_BUILD=1 ;;
         -s|--samba) OPT_SAMBA=1 ;;
-       --volumes-from) OPT_VOLUMES_FROM=$2; shift ;;
+        --volumes-from) OPT_VOLUMES_FROM=$2; shift ;;
+        -v) OPT_HOST_VOLUME=$2; shift ;;
     esac
     shift
 done
@@ -16,6 +17,10 @@ fi
 
 if test -n "$OPT_VOLUMES_FROM"; then
     DOCKER_OPTS="$DOCKER_OPTS --volumes-from=$OPT_VOLUMES_FROM"
+fi
+
+if test -n "$OPT_HOST_VOLUME"; then
+    DOCKER_OPTS="$DOCKER_OPTS -v $OPT_HOST_VOLUME"
 fi
 
 # Set up environment for connecting to docker
@@ -81,5 +86,5 @@ docker run $DOCKER_PARAMS \
     $DOCKER_OPTS \
     --volumes-from dsh-ws \
     --rm \
-    $DSH_IMAGE $*
+    $DSH_IMAGE "$@"
 
