@@ -1,9 +1,54 @@
 <html>
   <head>
-    <title>Docker Shell</title>
+    <title>Docker Shell: cross platform orchestration</title>
   </head>
   <body>
-    <h1>Docker Shell</h1>
-    <img src="images/logo.svg" alt=""/>
+    <img src="images/logo.svg" alt="Docker Shell"/>
+    <h1>Cross platform orchestration</h1>
+    <p>Docker Shell lets you set up a development or staging environment
+    inside a Docker container, which makes it relatively painless to use
+    identical environments on many different platforms.</p>
+    <h2>Features</h2>
+    <dl>
+      <dt>Persistent workspace</dt>
+      <dd>Docker Shell sets up a persistent workspace stored inside a data
+      container.</dd>
+      <dt>Experiment with new tools</dt>
+      <dd>Setting up extra tools inside Docker Shell is easy - only commit
+      the changes that you're satisfied with.</dd>
+      <dt>Built in SMB support</dt>
+      <dd>Access to the workspace using SMB is supported.</dd>
+    </dl>
+    <h2>Getting started</h2>
+    <pre>
+      git clone git@github.com:Solfisk/dsh
+      dsh/dsh
+    </pre>
+    <p>You need to have permission to execute docker run.</p>
+    <h2>Parameters</h2>
+    <p>The synopsis for dsh is:</p>
+    <pre>dsh [-b|--build] [-s|--samba] [--volumes-from &lt;container>] [-v &lt;hostpath>:&lt;containerpath>] [-- &lt;command> [ &lt;parameters...> ] ] </pre>
+    <dl>
+      <dt>-b | --build</dt>
+      <dd>(Re)build the docker shell image - rarely needed since this is
+      done automatically on first run.</dd>
+      <dt>-s | --samba</dt>
+      <dd>Export workspace using SMB.</dd>
+      <dt>--volumes-from &lt;container></dt>
+      <dd>Will start Docker Shell with the volumes exported by
+      &lt;container>.</dd>
+      <dt>-v &lt;hostpath>:&lt;containerpath></dt>
+      <dd>Will mount the &lt;hostpath> inside Docker Shell at
+      &lt;containerpath></dd>
+    </dl>
+    <p>Anything after two trailing dashes will be run as a command (and its
+    parameters inside Docker Shell upon startup.</p>
+    <h2>Examples</h2>
+    <pre>dsh -v ~/Downloads/assets:/tmp/assets -- rsync /tmp/downloads /workspace/my-project/assets</pre>
+    <p>Synchronize ~/Downloads/assets to my-project inside the
+    workspace.</p>
+    <pre>dsh --volumes-from my-data-container -- ls /my-data-container</pre>
+    <p>Look in the catalog /my-data-container provided by my-data-container 
+    (assuming this is exported by my-data-container).</p>
   </body>
 </html>
