@@ -26,6 +26,12 @@ pre {
     background-color: lightgrey;
     overflow-x: auto;
 }
+
+aside {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
     </style>
 <script>
 
@@ -54,6 +60,29 @@ m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
       <a href="#examples">Examples</a>
       <a href="#feedback">Feedback</a>
     </nav>
+    <aside>
+      <p>
+        <a href="https://twitter.com/DockerShell" class="twitter-follow-button"
+          data-show-count="false" data-size="large">Follow @DockerShell
+        </a>
+        <script>!function(d,s,id){var
+          js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,
+          'script', 'twitter-wjs');
+        </script>
+      </p>
+      <p>
+        <iframe
+          src="https://ghbtns.com/github-btn.html?user=Solfisk&repo=dsh&type=star&count=false&size=large"
+          frameborder="0" scrolling="0" width="160px" height="30px">
+        </iframe>
+      </p>
+      <p>
+        <iframe
+          src="https://ghbtns.com/github-btn.html?user=Solfisk&repo=dsh&type=fork&count=false&size=large"
+          frameborder="0" scrolling="0" width="160px" height="30px">
+        </iframe>
+      </p>
+    </aside>
     <section>
     <p>Docker Shell lets you set up a development or staging environment
     inside a Docker container, which makes it relatively painless to use
@@ -110,7 +139,6 @@ dsh/dsh</pre>
     </section>
     <footer>
     <h1>Docker Shell - Copyright 2015</h1>
-    <a href="http://github.com/Solfisk/dsh">Github project</a>
     </footer>
   </body>
 </html>
