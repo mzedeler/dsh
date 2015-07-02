@@ -23,6 +23,10 @@ if test -n "$OPT_HOST_VOLUME"; then
     DOCKER_OPTS="$DOCKER_OPTS -v $OPT_HOST_VOLUME"
 fi
 
+if test -t 1; then
+    DOCKER_OPTS="$DOCKER_OPTS -t"
+fi
+
 # Set up environment for connecting to docker
 if test -n "$(uname -a | grep boot2docker)"; then
     # Running inside boot2docker vm
@@ -84,7 +88,7 @@ fi
 
 # Now run the docker shell container
 docker run $DOCKER_PARAMS \
-    -t -i \
+    -i \
     $DOCKER_OPTS \
     --volumes-from dsh-ws \
     --rm \
