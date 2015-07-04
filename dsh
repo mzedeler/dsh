@@ -7,6 +7,7 @@ while test $# != 0 -a "$1" != "--"; do
         -s|--samba) OPT_SAMBA=1 ;;
         --volumes-from) OPT_VOLUMES_FROM=$2; shift ;;
         -v) OPT_HOST_VOLUME=$2; shift ;;
+        --host-workspace) OPT_HOST_WORKSPACE=$2; shift ;;
     esac
     shift
 done
@@ -25,6 +26,12 @@ fi
 
 if test -t 1; then
     DOCKER_OPTS="$DOCKER_OPTS -t"
+fi
+
+if test -n "$OPT_HOST_WORKSPACE"; then
+    DOCKER_OPTS="$DOCKER_OPTS -v $(readlink -f $OPT_HOST_WORKSPACE):/workspace"
+else
+    DOCKER_OPTS="$DOCKER_OPTS --volumes-from dsh-ws"
 fi
 
 # Set up environment for connecting to docker
@@ -90,7 +97,6 @@ fi
 docker run $DOCKER_PARAMS \
     -i \
     $DOCKER_OPTS \
-    --volumes-from dsh-ws \
     --rm \
     $DSH_IMAGE "$@"
 
