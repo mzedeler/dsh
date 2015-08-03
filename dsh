@@ -92,5 +92,6 @@ docker run $DOCKER_PARAMS \
     $DOCKER_OPTS \
     --volumes-from dsh-ws \
     --rm \
+    -e HOME=/workspace
     $DSH_IMAGE "$@"
 
