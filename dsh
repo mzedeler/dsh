@@ -5,8 +5,8 @@ while test $# != 0 -a "$1" != "--"; do
     case $1 in
         -b|--build) OPT_BUILD=1 ;;
         -s|--samba) OPT_SAMBA=1 ;;
-        --volumes-from) OPT_VOLUMES_FROM=$2; shift ;;
-        -v) OPT_HOST_VOLUME=$2; shift ;;
+        --volumes-from) OPT_VOLUMES_FROM="${OPT_VOLUMES_FROM} ${2}"; shift ;;
+        -v) OPT_HOST_VOLUME="${OPT_HOST_VOLUME} ${2}"; shift ;;
     esac
     shift
 done
@@ -16,11 +16,15 @@ if test "$1" = "--"; then
 fi
 
 if test -n "$OPT_VOLUMES_FROM"; then
-    DOCKER_OPTS="$DOCKER_OPTS --volumes-from=$OPT_VOLUMES_FROM"
+    for VOL in ${OPT_VOLUMES_FROM}; do
+      DOCKER_OPTS="$DOCKER_OPTS --volumes-from=${VOL}"
+    done
 fi
 
 if test -n "$OPT_HOST_VOLUME"; then
-    DOCKER_OPTS="$DOCKER_OPTS -v $OPT_HOST_VOLUME"
+    for VOL in ${OPT_HOST_VOLUME}; do
+      DOCKER_OPTS="$DOCKER_OPTS -v ${VOL}"
+    done
 fi
 
 if test -t 1; then
