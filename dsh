@@ -73,7 +73,7 @@ if test -n "$OPT_BUILD" -o -z "$(docker images | grep '^dsh[[:space:]]')"; then
     echo 'Docker image not found. Rebuilding.'
     docker build -t dsh - <<END_DOCKERFILE
 FROM phusion/baseimage
-RUN curl -sSL https://get.docker.com/ubuntu/ | sh
+RUN curl -sSL https://get.docker.com/ | sh
 RUN perl -pe s{root:/root}{root:/workspace} -i /etc/passwd
 CMD login -p -f root
 END_DOCKERFILE
