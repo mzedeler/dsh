@@ -104,5 +104,6 @@ docker run $DOCKER_PARAMS \
     $DOCKER_OPTS \
     --rm \
     -e HOME=/workspace \
+    -w /workspace \
     $DSH_IMAGE "$@"
 
