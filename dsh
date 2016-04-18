@@ -11,6 +11,9 @@ while test $# != 0 -a "$1" != "--"; do
     shift
 done
 
+BASE_IMAGE=phusion/baseimage
+
+# The rest of the parameters after -- will be passed to the shell inside dsh
 if test "$1" = "--"; then
   shift
 fi
@@ -58,10 +61,15 @@ fi
 
 DSH_IMAGE=dsh
 if test -n "$OPT_BUILD" -o -z "$(docker images | grep '^dsh[[:space:]]')"; then
-    echo 'Docker image not found. Rebuilding.'
+    echo 'Building dsh image'
+    DOCKER_VERSION=$(docker -v | awk '{print $3}' | tr -d ,)
+    PHUSION_VERSION=$(docker run --rm $BASE_IMAGE lsb_release -cs)
     docker build -t dsh - <<END_DOCKERFILE
-FROM phusion/baseimage
-RUN curl -sSL https://get.docker.com/ | sh
+FROM $BASE_IMAGE
+# RUN apt-get install apt-transport-https ca-certificates
+RUN apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+RUN echo deb https://apt.dockerproject.org/repo ubuntu-$PHUSION_VERSION main > /etc/apt/sources.list.d/docker.list
+RUN apt-get update && apt-get install -y docker-engine=$DOCKER_VERSION-0~$PHUSION_VERSION
 RUN perl -pe s{root:/root}{root:/workspace} -i /etc/passwd
 CMD login -p -f root
 END_DOCKERFILE
@@ -75,7 +83,7 @@ fi
 EXIT_CODE=$(docker inspect --format "{{.State.ExitCode}}" dsh-ws 2>/dev/null)                             
 if test ${EXIT_CODE:-1} != 0; then
     docker run -t --name dsh-ws -v /workspace busybox true 2>/dev/null
-    docker run --rm --volumes-from=dsh-ws phusion/baseimage /bin/bash -c "cp /etc/skel/.* /workspace/ 2>/dev/null"
+    docker run --rm --volumes-from=dsh-ws $BASE_IMAGE /bin/bash -c "cp /etc/skel/.* /workspace/ 2>/dev/null"
 fi
 
 if test -n "$OPT_SAMBA"; then
