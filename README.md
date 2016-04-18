@@ -28,6 +28,8 @@ The shell comes with a data container of its own that is persisted across
 invocations of dsh. Anything under `/root` (a symlink to `/workspace`) is
 persisted in the data container named `dsh-ws`.
 
+Any running ssh agent will automatically be available inside dsh.
+
 
 ## Parameters
 
