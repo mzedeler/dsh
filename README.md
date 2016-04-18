@@ -33,10 +33,10 @@ Any running ssh agent will automatically be available inside dsh.
 
 ## Parameters
 
-   -s|--samba:       start samba server for file sharing
-   -b|--build:       rebuild dsh image
-   --host-workspace: to specify a path used as workspace in stead of the
-                     normal data container
+    -s|--samba:       start samba server for file sharing
+    -b|--build:       rebuild dsh image
+    --host-workspace: to specify a path used as workspace in stead of the
+                      normal data container
 
 Any options not on the list above will be passed to docker, for instance:
 
