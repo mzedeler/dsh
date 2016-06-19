@@ -6,6 +6,7 @@ while test $# != 0 -a "$1" != "--"; do
         -b|--build) OPT_BUILD=1 ;;
         -s|--samba) OPT_SAMBA=1 ;;
         --host-workspace) OPT_HOST_WORKSPACE=$2; shift ;;
+        -d) OPT_DETACH=1;;
         *) DOCKER_OPTS="${DOCKER_OPTS} $1" ;;
     esac
     shift
@@ -18,9 +19,16 @@ if test "$1" = "--"; then
   shift
 fi
 
-# If running in terminal, add -t flag
-if test -t 1; then
-    DOCKER_OPTS="$DOCKER_OPTS -t"
+if test -n "$OPT_DETACH"; then
+    DOCKER_OPTS="$DOCKER_OPTS -d"
+else
+    # If not running in detached mode, attach stdio and cleanup on exit
+    DOCKER_OPTS="$DOCKER_OPTS --rm -i"
+
+    # If running in terminal, add -t flag
+    if test -t 1; then
+        DOCKER_OPTS="$DOCKER_OPTS -t"
+    fi
 fi
 
 if test -n "$OPT_HOST_WORKSPACE"; then
@@ -96,9 +104,7 @@ fi
 
 # Now run the docker shell container
 docker run $DOCKER_PARAMS \
-    -i \
     $DOCKER_OPTS \
-    --rm \
     -e HOME=/workspace \
     -w /workspace \
     $DSH_IMAGE "$@"
