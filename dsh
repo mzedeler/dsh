@@ -6,13 +6,36 @@ while test $# != 0 -a "$1" != "--"; do
         -b|--build) OPT_BUILD=1 ;;
         -s|--samba) OPT_SAMBA=1 ;;
         --host-workspace) OPT_HOST_WORKSPACE=$2; shift ;;
-        -d) OPT_DETACH=1;;
+        -i) OPT_IMAGE=$2; shift ;;
+        -d) OPT_DETACH=1 ;;
         *) DOCKER_OPTS="${DOCKER_OPTS} $1" ;;
     esac
     shift
 done
 
 BASE_IMAGE=phusion/baseimage
+if test -n "$OPT_IMAGE"; then
+  DSH_IMAGE="$OPT_IMAGE"
+else
+  if docker images | grep -e '^dsh-custom[[:space:]]' >/dev/null; then
+    DSH_IMAGE=dsh-custom
+  else
+    DSH_IMAGE=dsh
+    if test -n "$OPT_BUILD" -o -z "$(docker images | grep '^dsh[[:space:]]')"; then
+        echo 'Building dsh image'
+        DOCKER_VERSION=$(docker -v | awk '{print $3}' | tr -d ,)
+        PHUSION_VERSION=$(docker run --rm $BASE_IMAGE lsb_release -cs)
+        docker build -t dsh - <<END_DOCKERFILE
+FROM $BASE_IMAGE
+# RUN apt-get install apt-transport-https ca-certificates
+RUN apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+RUN echo deb https://apt.dockerproject.org/repo ubuntu-$PHUSION_VERSION main > /etc/apt/sources.list.d/docker.list
+RUN apt-get update && apt-get install -y docker-engine=$DOCKER_VERSION-0~$PHUSION_VERSION
+RUN perl -pe s{root:/root}{root:/workspace} -i /etc/passwd
+END_DOCKERFILE
+    fi
+  fi
+fi
 
 # The rest of the parameters after -- will be passed to the shell inside dsh
 if test "$1" = "--"; then
@@ -67,26 +90,6 @@ else
     fi
 fi
 
-DSH_IMAGE=dsh
-if test -n "$OPT_BUILD" -o -z "$(docker images | grep '^dsh[[:space:]]')"; then
-    echo 'Building dsh image'
-    DOCKER_VERSION=$(docker -v | awk '{print $3}' | tr -d ,)
-    PHUSION_VERSION=$(docker run --rm $BASE_IMAGE lsb_release -cs)
-    docker build -t dsh - <<END_DOCKERFILE
-FROM $BASE_IMAGE
-# RUN apt-get install apt-transport-https ca-certificates
-RUN apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
-RUN echo deb https://apt.dockerproject.org/repo ubuntu-$PHUSION_VERSION main > /etc/apt/sources.list.d/docker.list
-RUN apt-get update && apt-get install -y docker-engine=$DOCKER_VERSION-0~$PHUSION_VERSION
-RUN perl -pe s{root:/root}{root:/workspace} -i /etc/passwd
-CMD login -p -f root
-END_DOCKERFILE
-fi
-
-if docker images | grep -e '^dsh-custom[[:space:]]' >/dev/null; then
-    DSH_IMAGE=dsh-custom
-fi
-
 # Set up data container for workspace (if it doesn't exist already)
 EXIT_CODE=$(docker inspect --format "{{.State.ExitCode}}" dsh-ws 2>/dev/null)                             
 if test ${EXIT_CODE:-1} != 0; then
@@ -100,6 +103,10 @@ if test -n "$OPT_SAMBA"; then
     if test ${RUNNING:-false} = false; then
         docker run -e USER=root -e USERID=0 --rm -v "$(which docker):/docker" -v /var/run/docker.sock:/docker.sock svendowideit/samba dsh-ws
     fi
+fi
+
+if test -z "$1"; then
+    set -- /bin/sh -c '/bin/login -f root -p'
 fi
 
 # Now run the docker shell container
