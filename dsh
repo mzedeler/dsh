@@ -106,7 +106,9 @@ if test -n "$OPT_SAMBA"; then
 fi
 
 if test -z "$1"; then
-    set -- /bin/sh -c '/bin/login -f root -p'
+    if test -z "$OPT_DETACH"; then
+        set -- /bin/sh -c '/bin/login -f root -p'
+    fi
 fi
 
 # Now run the docker shell container
