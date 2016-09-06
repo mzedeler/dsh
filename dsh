@@ -26,8 +26,8 @@ else
     if test -n "$OPT_BUILD" -o -z "$(docker images | grep '^dsh[[:space:]]')"; then
         echo 'Building dsh image'
         DOCKER_VERSION=${OPT_DOCKER_VERSION-$(docker -v | awk '{print $3}' | tr -d ,)}
-        DOCKER_PACKAGE=${OPT_DOCKER_PACKAGE-docker-engine=$DOCKER_VERSION-0~$PHUSION_VERSION}
         PHUSION_VERSION=$(docker run --rm $BASE_IMAGE lsb_release -cs)
+        DOCKER_PACKAGE=${OPT_DOCKER_PACKAGE-docker-engine=$DOCKER_VERSION-0~$PHUSION_VERSION}
         docker build -t dsh - <<END_DOCKERFILE
 FROM $BASE_IMAGE
 # RUN apt-get install apt-transport-https ca-certificates
