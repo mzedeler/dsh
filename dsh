@@ -27,7 +27,9 @@ else
         echo 'Building dsh image'
         DOCKER_VERSION=${OPT_DOCKER_VERSION-$(docker -v | awk '{print $3}' | tr -d ,)}
         PHUSION_VERSION=$(docker run --rm $BASE_IMAGE lsb_release -cs)
-        DOCKER_PACKAGE=${OPT_DOCKER_PACKAGE-docker-engine=$DOCKER_VERSION-0~$PHUSION_VERSION}
+        # Due to change in name of docker-engine packages from v1.12.4 which also contains name of distribution
+        PHUSION_DIST=$(dpkg --compare-versions 1.12.4 le $DOCKER_VERSION && docker run --rm $BASE_IMAGE lsb_release -is | awk '{print tolower($0)"-"}')
+        DOCKER_PACKAGE=${OPT_DOCKER_PACKAGE-docker-engine=$DOCKER_VERSION-0~$PHUSION_DIST$PHUSION_VERSION}
         docker build -t dsh - <<END_DOCKERFILE
 FROM $BASE_IMAGE
 # RUN apt-get install apt-transport-https ca-certificates
