@@ -26,6 +26,8 @@ else
     if test -n "$OPT_BUILD" -o -z "$(docker images | grep '^dsh[[:space:]]')"; then
         echo 'Building dsh image'
         DOCKER_VERSION=${OPT_DOCKER_VERSION-$(docker -v | awk '{print $3}' | tr -d ,)}
+        # Community edition - correction of version number for apt
+        DOCKER_VERSION=$(echo $DOCKER_VERSION | sed 's/-ce$/~ce/')
         PHUSION_VERSION=$(docker run --rm $BASE_IMAGE lsb_release -cs)
         # Due to change in name of docker-engine packages from v1.12.4 which also contains name of distribution
         PHUSION_DIST=$(dpkg --compare-versions 1.12.4 le $DOCKER_VERSION && docker run --rm $BASE_IMAGE lsb_release -is | awk '{print tolower($0)"-"}')
