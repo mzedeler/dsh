@@ -26,17 +26,19 @@ else
     if test -n "$OPT_BUILD" -o -z "$(docker images | grep '^dsh[[:space:]]')"; then
         echo 'Building dsh image'
         DOCKER_VERSION=${OPT_DOCKER_VERSION-$(docker -v | awk '{print $3}' | tr -d ,)}
+        ARCH='amd64'
         # Community edition - correction of version number for apt
         DOCKER_VERSION=$(echo $DOCKER_VERSION | sed 's/-ce$/~ce/')
         PHUSION_VERSION=$(docker run --rm $BASE_IMAGE lsb_release -cs)
         # Due to change in name of docker-engine packages from v1.12.4 which also contains name of distribution
-        PHUSION_DIST=$(dpkg --compare-versions 1.12.4 le $DOCKER_VERSION && docker run --rm $BASE_IMAGE lsb_release -is | awk '{print tolower($0)"-"}')
-        DOCKER_PACKAGE=${OPT_DOCKER_PACKAGE-docker-engine=$DOCKER_VERSION-0~$PHUSION_DIST$PHUSION_VERSION}
+        PHUSION_DIST=$(docker run --rm $BASE_IMAGE lsb_release -is | awk '{print tolower($0)}')
+        DOCKER_PACKAGE=${OPT_DOCKER_PACKAGE-docker-ce=$DOCKER_VERSION-0~$PHUSION_DIST}
+        # Docker is now downloaded from download.docker.com and versions below 17.06.0 shouldn't be tried!
         docker build -t dsh - <<END_DOCKERFILE
 FROM $BASE_IMAGE
 # RUN apt-get install apt-transport-https ca-certificates
-RUN apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
-RUN echo deb https://apt.dockerproject.org/repo ubuntu-$PHUSION_VERSION main > /etc/apt/sources.list.d/docker.list
+RUN apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+RUN echo deb [arch=$ARCH] https://download.docker.com/linux/ubuntu $PHUSION_VERSION stable > /etc/apt/sources.list.d/docker.list
 RUN apt-get update && apt-get install -y $DOCKER_PACKAGE
 RUN perl -pe s{root:/root}{root:/workspace} -i /etc/passwd
 END_DOCKERFILE
